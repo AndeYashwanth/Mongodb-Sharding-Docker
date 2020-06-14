@@ -1,0 +1,161 @@
+
+version: '3.7'
+
+services:
+
+  #config server replicaset of 3 instances.
+  cfgsvr1:
+    container_name: cfgsvr1
+    networks:
+      - mongo
+    image: mongo
+    command: mongod --configsvr --replSet cfgrs --port 27017 --dbpath /data/db
+    ports:
+      - 40001:27017
+    volumes:
+      - cfgsvr1:/data/db
+      - ./init-scripts/init-cfgsvr.js:/init-cfgsvr.js
+
+  cfgsvr2:
+    container_name: cfgsvr2
+    networks:
+      - mongo
+    image: mongo
+    command: mongod --configsvr --replSet cfgrs --port 27017 --dbpath /data/db
+    ports:
+      - 40002:27017
+    volumes:
+      - cfgsvr2:/data/db
+      - ./init-scripts/init-cfgsvr.js:/init-cfgsvr.js
+
+  cfgsvr3:
+    container_name: cfgsvr3
+    networks:
+      - mongo
+    image: mongo
+    command: mongod --configsvr --replSet cfgrs --port 27017 --dbpath /data/db
+    ports:
+      - 40003:27017
+    volumes:
+      - cfgsvr3:/data/db
+      - ./init-scripts/init-cfgsvr.js:/init-cfgsvr.js
+
+
+
+  #1 mongos router
+  mongos:
+    networks:
+      - mongo
+    container_name: mongos
+    image: mongo
+    command: mongos --configdb cfgrs/cfgsvr1:27017,cfgsvr2:27017,cfgsvr3:27017 --bind_ip_all --port 27017
+    ports:
+      - 60000:27017
+    volumes:
+      - ./init-scripts/init-mongos.js:/init-mongos.js
+    depends_on: #only used when all the services are declared in single docker-compose file.
+      - cfgsvr1
+      - cfgsvr2
+      - cfgsvr3
+      - shard1svr1
+      - shard1svr2
+      - shard1svr3
+      - shard2svr1
+      - shard2svr2
+      - shard2svr3
+
+
+
+  #shard1 replica set of 3 instances.
+  shard1svr1:
+    container_name: shard1svr1
+    networks:
+      - mongo
+    image: mongo
+    command: mongod --shardsvr --replSet shard1rs --port 27017 --dbpath /data/db
+    ports:
+      - 50001:27017
+    volumes:
+      - shard1svr1:/data/db
+      - ./init-scripts/init-shard1.js:/init-shard1.js
+
+  shard1svr2:
+    container_name: shard1svr2
+    networks:
+      - mongo
+    image: mongo
+    command: mongod --shardsvr --replSet shard1rs --port 27017 --dbpath /data/db
+    ports:
+      - 50002:27017
+    volumes:
+      - shard1svr2:/data/db
+      - ./init-scripts/init-shard1.js:/init-shard1.js
+
+  shard1svr3:
+    container_name: shard1svr3
+    networks:
+      - mongo
+    image: mongo
+    command: mongod --shardsvr --replSet shard1rs --port 27017 --dbpath /data/db
+    ports:
+      - 50003:27017
+    volumes:
+      - shard1svr3:/data/db
+      - ./init-scripts/init-shard1.js:/init-shard1.js
+
+
+
+  #shard2 replica set of 3 instances.
+  shard2svr1:
+    container_name: shard2svr1
+    networks:
+      - mongo
+    image: mongo
+    command: mongod --shardsvr --replSet shard2rs --port 27017 --dbpath /data/db
+    ports:
+      - 50004:27017
+    volumes:
+      - shard2svr1:/data/db
+      - ./init-scripts/init-shard2.js:/init-shard2.js
+
+  shard2svr2:
+    container_name: shard2svr2
+    networks:
+      - mongo
+    image: mongo
+    command: mongod --shardsvr --replSet shard2rs --port 27017 --dbpath /data/db
+    ports:
+      - 50005:27017
+    volumes:
+      - shard2svr2:/data/db
+      - ./init-scripts/init-shard2.js:/init-shard2.js
+
+  shard2svr3:
+    container_name: shard2svr3
+    networks:
+      - mongo
+    image: mongo
+    command: mongod --shardsvr --replSet shard2rs --port 27017 --dbpath /data/db
+    ports:
+      - 50006:27017
+    volumes:
+      - shard2svr3:/data/db
+      - ./init-scripts/init-shard2.js:/init-shard2.js
+
+
+volumes:
+  cfgsvr1: {}
+  cfgsvr2: {}
+  cfgsvr3: {}
+  shard1svr1: {}
+  shard1svr2: {}
+  shard1svr3: {}
+  shard2svr1: {}
+  shard2svr2: {}
+  shard2svr3: {}
+
+
+networks:
+  mongo:
+      name: mongo
+      driver: bridge
